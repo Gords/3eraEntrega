@@ -1,0 +1,166 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>
+     Sistema de Inventario para Juegos
+  </title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/wingcss/0.1.8/wing.min.css"/>
+  <style>
+    input[type=number] {
+      width: 100%;
+      padding: 12px 20px;
+      margin: 8px 0;
+      display: inline-block;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      -webkit-transition: .5s;
+      transition: .5s;
+      outline: 0;
+      font-family: 'Open Sans',serif;
+    }
+  </style>
+  <!-- Load AngularJS -->
+  <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+  <script type="text/javascript">
+    var app = angular.module("funcionarioManagement", []);
+
+    //Controller Part
+    app.controller("funcionarioManagementController", function ($scope, $http) {
+
+      //Initialize page with default data which is blank in this example
+      $scope.funcionarios = [];
+
+      $scope.form = {
+        id: -1,
+        nombre: "",
+        apellido: "",
+        direccion: "",
+        telefono: "",
+      };
+
+      //Now load the data from server
+      _refreshPageData();
+
+      //HTTP POST/PUT methods for add/edit funcionarios
+      $scope.update = function () {
+        var method = "";
+        var url = "";
+        var data = {};
+        if ($scope.form.id == -1) {
+          //Id is absent so add funcionarios - POST operation
+          method = "POST";
+          url = '/api/funcionarios';
+          data.nombre = $scope.form.nombre;
+          data.apellido = $scope.form.apellido;
+          data.direccion = $scope.form.direccion;
+          data.telefono = $scope.form.telefono;
+        } else {
+          //If Id is present, it's edit operation - PUT operation
+          method = "PUT";
+          url = '/api/funcionarios/' + $scope.form.id;
+          data.nombre = $scope.form.nombre;
+          data.apellido = $scope.form.apellido;
+          data.direccion = $scope.form.direccion;
+          data.telefono = $scope.form.telefono;
+        }
+
+        $http({
+          method: method,
+          url: url,
+          data: angular.toJson(data),
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }).then(_success, _error);
+      };
+
+      //HTTP DELETE- delete funcionario by id
+      $scope.remove = function (funcionario) {
+        $http({
+          method: 'DELETE',
+          url: '/api/funcionarios/' + funcionario.id
+        }).then(_success, _error);
+      };
+
+      //In case of edit funcionarios, populate form with funcionario data
+      $scope.edit = function (funcionario) {
+        $scope.form.nombre = funcionario.nombre;
+        $scope.form.apellido = funcionario.apellido;
+        $scope.form.direccion = funcionario.direccion;
+        $scope.form.telefono = funcionario.telefono;
+        $scope.form.id = funcionario.id;
+      };
+
+      /* Private Methods */
+      //HTTP GET- get all funcionarios collection
+      function _refreshPageData() {
+        $http({
+          method: 'GET',
+          url: '/api/funcionarios'
+        }).then(function successCallback(response) {
+          $scope.funcionarios = response.data;
+        }, function errorCallback(response) {
+          funcionario.log(response.statusText);
+        });
+      }
+
+      function _success(response) {
+        _refreshPageData();
+        _clearForm()
+      }
+
+      function _error(response) {
+        alert(response.data.error || response.statusText);
+      }
+
+      //Clear the form
+      function _clearForm() {
+        $scope.form.nombre = "";
+        $scope.form.apellido = "";
+        $scope.direccion= "";
+        $scope.telefono = "";
+        $scope.form.id = -1;
+      }
+    });
+  </script>
+</head>
+<body ng-app="funcionarioManagement" ng-controller="funcionarioManagementController">
+
+<div>
+
+  <h1>Agregar/Editar consola</h1>
+
+  <form ng-submit="update()">
+    <div class="row">
+      <div class="col-2"><input type="text" placeholder="Nombre" ng-model="form.nombre" /></div>
+      <div class="col-1"><input type="number" placeholder="Apellido" ng-model="form.apellido" /></div>
+      <div class="col-1"><input type="text" placeholder="Direccion" ng-model="form.direccion"/></div>
+      <div class="col-1"><input type="number" placeholder="Telefono" ng-model="form.telefono" /></div>
+    </div>
+    <input type="submit" value="Save"/>
+  </form>
+
+  <h3>Lista Consolas</h3>
+
+  <div class="row">
+    <div class="col-2">Nombre</div>
+    <div class="col-1">Apellido</div>
+    <div class="col-1">Direccion</div>
+    <div class="col-1">Telefono</div>
+    <div class="col-2"></div>
+  </div>
+
+  <div class="row" ng-repeat="funcionario in funcionarios">
+    <div class="col-2">{{ funcionario.nombre }}</div>
+    <div class="col-1">{{ funcionario.apellido }}</div>
+    <div class="col-1">{{ funcionario.direccion }}</div>
+    <div class="col-1">{{ funcionario.telefono }}</div>
+    <div class="col-2"><a ng-click="edit( funcionario )" class="btn">Edit</a> <a ng-click="remove( funcionario )" class="btn">Remove</a></div>
+  </div>
+
+</div>
+
+</body>
+</html>

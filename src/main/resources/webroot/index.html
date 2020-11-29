@@ -1,0 +1,163 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>
+     Sistema de Inventario para Juegos
+  </title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/wingcss/0.1.8/wing.min.css"/>
+  <style>
+    input[type=number] {
+      width: 100%;
+      padding: 12px 20px;
+      margin: 8px 0;
+      display: inline-block;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      -webkit-transition: .5s;
+      transition: .5s;
+      outline: 0;
+      font-family: 'Open Sans',serif;
+    }
+  </style>
+  <!-- Load AngularJS -->
+  <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+  <script type="text/javascript">
+    var app = angular.module("ConsoleManagement", []);
+
+    app.controller("ConsoleManagementController", function ($scope, $http) {
+
+      $scope.consoles = [];
+
+      $scope.form = {
+        id: -1,
+        name: "",
+        stock: 0,
+        discReader: "no",
+        storage: 0,
+        coreCount: 0
+      };
+
+      _refreshPageData();
+
+      $scope.update = function () {
+        var method = "";
+        var url = "";
+        var data = {};
+        if ($scope.form.id == -1) {
+          method = "POST";
+          url = '/api/consoles';
+          data.name = $scope.form.name;
+          data.stock = $scope.form.stock;
+          data.discReader = $scope.form.discReader;
+          data.storage = $scope.form.storage;
+          data.coreCount = $scope.form.coreCount;
+        } else {
+          method = "PUT";
+          url = '/api/consoles/' + $scope.form.id;
+          data.name = $scope.form.name;
+          data.stock = $scope.form.stock;
+          data.discReader = $scope.form.discReader;
+          data.storage = $scope.form.storage;
+          data.coreCount = $scope.form.coreCount;
+        }
+
+        $http({
+          method: method,
+          url: url,
+          data: angular.toJson(data),
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }).then(_success, _error);
+      };
+
+      $scope.remove = function (console) {
+        $http({
+          method: 'DELETE',
+          url: '/api/consoles/' + console.id
+        }).then(_success, _error);
+      };
+
+      $scope.edit = function (console) {
+        $scope.form.name = console.name;
+        $scope.form.stock = console.stock;
+        $scope.form.discReader = console.discReader;
+        $scope.form.storage = console.storage;
+        $scope.form.coreCount = console.coreCount;
+        $scope.form.id = console.id;
+      };
+
+      function _refreshPageData() {
+        $http({
+          method: 'GET',
+          url: '/api/consoles'
+        }).then(function successCallback(response) {
+          $scope.consoles = response.data;
+        }, function errorCallback(response) {
+          console.log(response.statusText);
+        });
+      }
+
+      function _success(response) {
+        _refreshPageData();
+        _clearForm()
+      }
+
+      function _error(response) {
+        alert(response.data.error || response.statusText);
+      }
+
+      function _clearForm() {
+        $scope.form.name = "";
+        $scope.form.stock = 0;
+        $scope.discReader= "no";
+        $scope.storage = 0;
+        $scope.coreCount = 0;
+        $scope.form.id = -1;
+      }
+    });
+  </script>
+</head>
+<body ng-app="ConsoleManagement" ng-controller="ConsoleManagementController">
+
+<div>
+
+  <h1>Agregar/Editar consola</h1>
+
+  <form ng-submit="update()">
+    <div class="row">
+      <div class="col-2"><input type="text" placeholder="Nombre" ng-model="form.name" /></div>
+      <div class="col-1"><input type="number" placeholder="Stock" ng-model="form.stock" /></div>
+      <div class="col-1"><input type="text" placeholder="Lector" ng-model="form.discReader"/></div>
+      <div class="col-1"><input type="number" placeholder="Espacio (GB)" ng-model="form.storage" /></div>
+      <div class="col-1"><input type="number" placeholder="Cores" ng-model="form.coreCount" /></div>
+    </div>
+    <input type="submit" value="Save"/>
+  </form>
+
+  <h3>Lista Consolas</h3>
+
+  <div class="row">
+    <div class="col-2">Nombre</div>
+    <div class="col-1">Stock</div>
+    <div class="col-1">Lector</div>
+    <div class="col-1">Espacio</div>
+    <div class="col-1">Cores</div>
+    <div class="col-2"></div>
+  </div>
+
+  <div class="row" ng-repeat="console in consoles">
+    <div class="col-2">{{ console.name }}</div>
+    <div class="col-1">{{ console.stock }}</div>
+    <div class="col-1">{{ console.discReader }}</div>
+    <div class="col-1">{{ console.storage }}</div>
+    <div class="col-1">{{ console.coreCount }}</div>
+    <div class="col-2"><a ng-click="edit( console )" class="btn">Edit</a> <a ng-click="remove( console )" class="btn">Remove</a></div>
+  </div>
+
+</div>
+
+</body>
+</html>
